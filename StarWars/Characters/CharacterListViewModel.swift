@@ -10,17 +10,17 @@ class CharacterListViewModel {
   weak var coodinator: CharactersListCoordinator?
   private let repository: CharactersRepository
   private(set) var items: [CharacterCellViewModel] = []
+  private var allCharacters: [Character] = []
   private var isLoading = false
   private var hasMorePages = true
   private var searchQuery: String = ""
-  private var allCharacters: [Character] = []
   private(set) var adsEnabled: Bool = false
   
   init(coodinator: CharactersListCoordinator, respository: CharactersRepository) {
     self.coodinator = coodinator
     self.repository = respository
   }
-  
+    
   func load() {
     if let cached = try? repository.getCachedCharacters(), !cached.isEmpty {
       self.allCharacters = cached
@@ -37,37 +37,28 @@ class CharacterListViewModel {
     isLoading = true
     delegate?.didUpdateLoadingState(isLoading: true)
     
-    Task {
+    Task { [weak self] in
+      guard let self = self else { return }
       do {
-        let newCharacters = try await repository.fetchNextPage()
-        
-        if newCharacters.isEmpty {
-          hasMorePages = false
-        } else {
-          let merged = Array(Set(self.allCharacters + newCharacters))
-          allCharacters = merged
-          applyFilterAndSort()
-        }
+        let newCharacters = try await self.repository.fetchNextPage()
         
         await MainActor.run {
+          if newCharacters.isEmpty {
+            self.hasMorePages = false
+          } else {
+            let merged = Array(Set(self.allCharacters + newCharacters))
+            self.allCharacters = merged
+            self.applyFilterAndSort()
+          }
           self.isLoading = false
           self.delegate?.didUpdateData()
           self.delegate?.didUpdateLoadingState(isLoading: false)
         }
         
       } catch {
-        let cached = (try? repository.getCachedCharacters()) ?? []
-        
         await MainActor.run {
           self.isLoading = false
           self.hasMorePages = false
-          
-          if !cached.isEmpty && self.allCharacters.isEmpty {
-            self.allCharacters = cached
-            self.applyFilterAndSort()
-            self.delegate?.didUpdateData()
-          }
-          
           self.delegate?.didUpdateLoadingState(isLoading: false)
           self.delegate?.didReceiveError("Error al obtener personajes \(error)")
         }
@@ -77,13 +68,13 @@ class CharacterListViewModel {
   
   func refresh() {
     hasMorePages = true
+    allCharacters.removeAll()
     items.removeAll()
     delegate?.didUpdateData()
-    
     repository.resetPagination()
     loadPage()
   }
-  
+
   func updateSearch(query: String) {
     searchQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
     applyFilterAndSort()
@@ -106,7 +97,7 @@ class CharacterListViewModel {
     let sorted = sortCharacters(base)
     items = sorted.map(CharacterCellViewModel.init)
   }
-  
+
   func didSelectItem(at index: Int) {
     let character = items[index].character
     coodinator?.showDetail(for: character)
@@ -126,7 +117,7 @@ class CharacterListViewModel {
       }
     }
   }
-  
+
   func setAdsEnabled(_ enabled: Bool) {
     adsEnabled = enabled
     delegate?.didUpdateData()

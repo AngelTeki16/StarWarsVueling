@@ -91,7 +91,7 @@ final class CoreDataCharactersDataSource: LocalCharactersDataSource {
   }
   
   private func mapRawToGender(_ raw: String) -> Gender {
-    Gender(rawValue: raw)
+    Gender(apiValue: raw)
   }
 }
 

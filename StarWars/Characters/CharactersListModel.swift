@@ -36,8 +36,8 @@ enum Gender {
   case NA
   case unknown
   
-  init(rawValue: String) {
-    switch rawValue.lowercased() {
+  init(apiValue: String) {
+    switch apiValue.lowercased() {
     case "male":
       self = .male
     case "female":
@@ -46,7 +46,6 @@ enum Gender {
       self = .NA
     default:
       self = .unknown
-      
     }
   }
 }
@@ -65,35 +64,37 @@ struct Character {
     self.gender = gender
     self.filmURLs = filmURLs
   }
-  
-  init(dto: PersonDTO) {
-    self.id = Character.getID(from: dto.url)
-    self.name = dto.name
-    self.birthYear  = dto.birthYear
-    self.gender = Gender(rawValue: dto.gender)
-    self.filmURLs = dto.films.compactMap { URL(string: $0) }
+}
+
+extension PersonDTO {
+  func toDomain() -> Character {
+    let id = Character.getID(from: url)
+    let gender = Gender(apiValue: gender)
+    let urls = films.compactMap { URL(string: $0) }
+    return Character(id: id, name: name, birthYear: birthYear, gender: gender, filmURLs: urls)
   }
-  
-  private static func getID(from urlString: String) -> Int {
+}
+
+private extension Character {
+  static func getID(from urlString: String) -> Int {
     guard let url = URL(string: urlString) else { return -1 }
     let lastPath = url.lastPathComponent
     return Int(lastPath) ?? -1
   }
 }
 
-
 extension Character {
   ///
-  ///BBY -> Befoe battle of yavin -> Negativos
-  ///ABY-> After battle of yavin -> Positivos
+  /// BBY -> Before battle of Yavin  -> Negativos
+  /// ABY -> After battle of Yavin   -> Positivos
   ///
-  
   var birthYearNumeric: Double? {
     let value = birthYear.lowercased()
+    
     if value == "unknown" {
       return nil
     }
-    if value.hasSuffix("bby"){
+    if value.hasSuffix("bby") {
       let number = value.replacingOccurrences(of: "bby", with: "")
       return -(Double(number) ?? 0)
     }

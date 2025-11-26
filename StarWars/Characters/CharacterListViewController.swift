@@ -156,9 +156,12 @@ extension CharacterListViewController: UITableViewDelegate {
   }
   
   func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-    guard let viewModel else { return }
-    let lastIndex = viewModel.items.count - 1
-    if indexPath.row == lastIndex {
+    guard let viewModel = viewModel else { return }
+    let count = viewModel.items.count
+    guard count > 0 else { return }
+    let threshold = 5
+    let lastIndex = count - 1
+    if indexPath.row >= max(0, lastIndex - threshold) {
       viewModel.loadPage()
     }
   }

@@ -37,6 +37,6 @@ final class DefaultRemoteCharactersDataSource: RemoteCharactersDataSource {
       nextURL = nil
     }
     
-    return reponse.results.map(Character.init(dto:))
+    return reponse.results.map{ $0.toDomain() }
   }
 }
