@@ -42,6 +42,10 @@ El ViewModel inserta objetos .ad dentro del listado.
 El ViewController muestra una celda especial PUBLICIDAD.
 Desde el icono de tuerca en el navbar, el usuario activa o desactiva la publicidad.
 
+Pruebas Unitarias. 
+Pruebas unitarias en viewModel de listado princiapal
+Pruebas unitarias para Impl de repository
+
 Conclusión.
 Arquitectura limpia y escalable
 Uso moderno de Swift Concurrency
